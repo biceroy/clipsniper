@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>ClipSniper</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="/hls.min.js"></script>
+<style>
+:root{
+  --bg:#111214;--bg2:#15161a;--panel:#18191d;--raised:#202126;--hover:#24252b;
+  --line:#26272d;--line2:#34353c;
+  --text:#e8e8e6;--text2:#b8b9b4;--mute:#82838c;--dim:#5e5f68;
+  --win:#62c94a;--win-ink:#0d2306;--bonus:#d9a441;--bonus-ink:#2b1f05;--fun:#ad93d6;--fun-ink:#231538;
+  --bad:#e06b66;--link:#9cbfdc;
+  --sans:"Barlow",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --disp:"Barlow Condensed","Arial Narrow",sans-serif-condensed,var(--sans);
+  --mono:"JetBrains Mono",ui-monospace,Consolas,"SF Mono",monospace;
+  --r:5px;--r2:8px;
+}
+*{box-sizing:border-box}html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:14.5px/1.5 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:var(--link);text-decoration:none}a:hover{text-decoration:underline}
+:focus-visible{outline:2px solid var(--text2);outline-offset:2px}
+::selection{background:rgba(98,201,74,.3)}
+h1,h2,h3{margin:0;font-weight:600;letter-spacing:0}
+.eyebrow{font-size:12.5px;color:var(--mute)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.mute{color:var(--mute)}.dim{color:var(--dim)}.sp{flex:1}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+/* controls */
+button{font:inherit;font-weight:500;cursor:pointer;border:1px solid transparent;border-radius:var(--r);padding:7px 13px;background:var(--raised);color:var(--text);line-height:1.2;transition:background .12s,border-color .12s;display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+button:hover{background:var(--hover)}
+button.p{background:var(--win);color:var(--win-ink);border-color:transparent;font-weight:600}button.p:hover{background:#72d65a}
+button.s{background:transparent;color:var(--text2);border-color:var(--line2)}button.s:hover{background:var(--raised);color:var(--text)}
+button.g{background:transparent;color:var(--mute);padding:6px 10px}button.g:hover{color:var(--text);background:var(--raised)}
+button.d{background:transparent;color:var(--mute);border-color:var(--line2);flex:0 0 auto}button.d:hover{color:var(--bad);border-color:var(--bad);background:transparent}
+button:disabled{opacity:.45;cursor:default}
+.q{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r2);margin-bottom:8px;cursor:pointer;transition:border-color .12s}.q:hover{border-color:var(--line2)}.q b{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}.q .bar{width:140px;height:4px;flex:none}.q .pct{font-family:var(--mono);font-size:12px;color:var(--text2);min-width:3ch;text-align:right}
+button svg{width:16px;height:16px;flex:none}
+input,select{font:inherit;background:var(--bg2);color:var(--text);border:1px solid var(--line2);border-radius:var(--r);padding:8px 11px;min-width:0}
+input:focus,select:focus{outline:none;border-color:var(--mute)}
+input::placeholder{color:var(--dim)}
+kbd{font:500 11px/1 var(--mono);background:var(--raised);border:1px solid var(--line2);border-radius:3px;padding:2px 5px;color:var(--text2)}
+
+/* top bar */
+.top{display:flex;align-items:center;gap:16px;height:50px;padding:0 20px;border-bottom:1px solid var(--line);background:var(--bg);position:sticky;top:0;z-index:5}
+.logo{display:flex;align-items:center;gap:8px;font-weight:600;font-size:15.5px;color:var(--text)}
+.logo svg{width:18px;height:18px;color:var(--win)}
+.logo b{font-weight:600}
+.crumb{color:var(--mute);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.crumb b{color:var(--text2);font-weight:500}
+.view{display:none}.view.on{display:block}
+.wrap{max-width:1440px;margin:0 auto;padding:32px 24px 60px}
+
+/* ------------------------------------------------------------ home */
+.hero{display:flex;align-items:flex-end;gap:24px;flex-wrap:wrap;margin-bottom:28px}
+.hero h1{font-size:26px;line-height:1.15;margin-top:4px}
+.hero .sub{color:var(--mute);margin-top:6px;max-width:52ch}
+.cmd{display:flex;align-items:stretch;flex:1;min-width:320px;max-width:600px;background:var(--bg2);border:1px solid var(--line2);border-radius:var(--r2);overflow:hidden;transition:border-color .12s}
+.cmd:focus-within{border-color:var(--mute)}
+.cmd .pre{font-family:var(--mono);font-size:13px;color:var(--dim);padding:0 0 0 14px;display:flex;align-items:center;user-select:none}
+.cmd input{flex:1;border:0;background:transparent;padding:11px 10px;font-size:14.5px}
+.cmd button{margin:4px;border-radius:var(--r);padding:0 16px}
+.sec{display:flex;align-items:baseline;gap:10px;margin:36px 0 12px}
+.sec h2{font-size:15px;color:var(--text)}
+.sec .n{font-family:var(--mono);font-size:12px;color:var(--dim)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(272px,1fr));gap:14px}
+.vod{background:var(--panel);border:1px solid var(--line);border-radius:var(--r2);overflow:hidden;display:flex;flex-direction:column;transition:border-color .12s}
+.vod:hover{border-color:var(--line2)}
+.thumb{position:relative;background:#000;aspect-ratio:16/9}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb .dur{position:absolute;right:8px;bottom:8px;z-index:1;font-family:var(--mono);font-size:11px;background:rgba(0,0,0,.72);color:var(--text2);padding:2px 6px;border-radius:3px}
+.thumb .tag{position:absolute;left:8px;top:8px;z-index:1}
+.vod .b{padding:12px 14px 14px;display:flex;flex-direction:column;gap:8px;flex:1}
+.vod .t{font-weight:500;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.7em}
+.vod .m{font-size:12.5px;color:var(--mute);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.vod .m .warn{color:var(--bonus)}
+.vod .acts{display:flex;gap:8px;margin-top:auto;padding-top:4px}
+.vod .acts button{flex:1;justify-content:center}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:500;padding:2px 7px;border-radius:4px;background:var(--raised);color:var(--text2);line-height:1.4;white-space:nowrap}
+.chip.big_win{background:rgba(98,201,74,.14);color:var(--win)}.chip.bonus{background:rgba(217,164,65,.14);color:var(--bonus)}.chip.funny{background:rgba(173,147,214,.16);color:var(--fun)}
+.chip.nothing{background:var(--raised);color:var(--mute)}.chip.done{background:rgba(98,201,74,.14);color:var(--win)}
+.thumb .chip{background:rgba(0,0,0,.72)}
+.empty{padding:56px 24px;text-align:center;color:var(--mute);border:1px dashed var(--line2);border-radius:var(--r2)}
+.empty b{display:block;color:var(--text2);font-size:16px;font-weight:600;margin-bottom:4px}
+.grid .empty{grid-column:1/-1}
+
+/* ------------------------------------------------------------ run */
+.run{max-width:860px;margin:0 auto}
+.run h1{font-size:22px;line-height:1.2;margin-top:6px}
+.big{font-family:var(--disp);font-weight:600;font-size:56px;line-height:1;color:var(--text);font-variant-numeric:tabular-nums;margin:28px 0 12px}
+.big small{font-size:22px;color:var(--mute);font-weight:500;margin-left:2px}
+.bar{height:4px;background:var(--raised);border-radius:99px;overflow:hidden;position:relative}
+.bar i{display:block;height:100%;background:var(--win);width:0;transition:width .5s ease;border-radius:99px}
+.stage{display:flex;align-items:center;gap:10px;margin-top:12px;font-size:14px}
+.stage .dot{width:7px;height:7px;border-radius:50%;background:var(--win)}
+.log{font-family:var(--mono);font-size:12px;line-height:1.55;color:var(--text2);max-height:44vh;overflow:auto;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r2);padding:14px 16px;margin-top:20px;white-space:pre-wrap;word-break:break-word}
+
+/* ------------------------------------------------------------ review */
+.rv{display:grid;grid-template-columns:372px minmax(0,1fr);height:calc(100vh - 50px)}
+.list{border-right:1px solid var(--line);overflow:auto;background:var(--panel);display:flex;flex-direction:column}
+.tabs{display:flex;gap:6px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel);z-index:2}
+.tabs .seg{display:flex;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:2px;gap:2px}
+.tabs .seg button{padding:4px 10px;border-radius:3px;background:transparent;color:var(--mute);font-size:13px}
+.tabs .seg button.on{background:var(--raised);color:var(--text)}
+.tabs .seg button span{font-family:var(--mono);font-size:11px;color:var(--dim);margin-left:4px}.tabs .seg button.on span{color:var(--text2)}
+.mom{display:grid;grid-template-columns:112px 1fr;gap:12px;padding:12px;border-bottom:1px solid var(--line);cursor:pointer;position:relative;transition:background .1s}
+.mom:hover{background:var(--hover)}
+.mom.on{background:var(--raised)}.mom.on::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--win)}
+.mom img{width:112px;aspect-ratio:16/9;object-fit:cover;border-radius:3px;background:#000;display:block}
+.mom .h{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.mom .tc{font-family:var(--mono);font-size:11.5px;color:var(--mute)}
+.mom .x{font-family:var(--disp);font-weight:600;font-size:22px;line-height:1;color:var(--text);font-variant-numeric:tabular-nums}
+.mom .x.big_win{color:var(--win)}.mom .x.bonus{color:var(--bonus)}.mom .x.funny{color:var(--fun)}
+.mom .x small{font-family:var(--sans);font-size:12.5px;font-weight:500;color:var(--text2);margin-left:6px;vertical-align:2px}
+.mom .d{font-size:12.5px;color:var(--mute);line-height:1.4;margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.mom .qt{font-size:12.5px;font-style:italic;color:var(--text2);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mom .ex{position:absolute;right:10px;top:10px;color:var(--win);display:inline-flex;align-items:center;gap:4px;font-size:11.5px}
+.mom .ex svg{width:12px;height:12px}
+.main{display:flex;flex-direction:column;min-width:0;overflow:auto;background:var(--bg)}.main>*{flex:none}
+.player{background:#000;position:relative;display:flex;justify-content:center}
+.player video{width:100%;max-height:54vh;display:block;background:#000}
+.player .q{position:absolute;right:12px;top:12px;font-family:var(--mono);font-size:11px;background:rgba(0,0,0,.6);color:var(--text2);padding:3px 7px;border-radius:3px;opacity:0;transition:opacity .2s}
+.player .q.on{opacity:1}
+.ctl{display:flex;gap:8px;align-items:center;padding:10px 16px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--panel);flex-wrap:wrap}
+.ctl .pp{width:38px;height:34px;justify-content:center;padding:0;background:var(--text);color:var(--bg)}
+.ctl .pp:hover{background:#fff}
+.tc{font-family:var(--mono);font-size:13.5px;font-variant-numeric:tabular-nums;min-width:160px}
+.keys{font-size:12px;color:var(--mute);display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.keys span{display:inline-flex;gap:4px;align-items:center}
+.strip{position:relative;height:64px;margin:14px 16px 0;border-radius:var(--r);overflow:hidden;background:var(--bg2);cursor:crosshair;display:flex;border:1px solid var(--line)}
+.strip img{flex:1;height:100%;object-fit:cover;min-width:0;opacity:.6;transition:opacity .15s}
+.strip:hover img{opacity:.75}
+.strip .mk{position:absolute;top:0;bottom:0;width:2px;background:var(--bonus);opacity:.8}
+.strip .mk.big_win{background:var(--win);opacity:1}.strip .mk.funny{background:var(--fun)}.strip .mk.nothing{opacity:.3}
+.strip .ph{position:absolute;top:0;bottom:0;width:2px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.6);pointer-events:none}
+.trim{margin:14px 16px 0;background:var(--panel);border:1px solid var(--line);border-radius:var(--r2);overflow:hidden}
+.trim .hd{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.trim .hd .ttl{font-size:16px;font-weight:600;line-height:1.2}
+.trim .hd .ttl .t{font-family:var(--mono);font-size:12.5px;color:var(--mute);font-weight:400;margin-right:10px}
+.trim .hd .desc{color:var(--mute);font-size:13px;flex-basis:100%}
+.trim .bd{padding:18px 16px 14px}
+.tl{position:relative;height:40px;background:var(--bg2);border-radius:var(--r);user-select:none;touch-action:none;
+    background-image:repeating-linear-gradient(90deg,var(--line) 0 1px,transparent 1px 5%);border:1px solid var(--line)}
+.tl .sel{position:absolute;top:0;bottom:0;background:rgba(98,201,74,.12);border-top:1px solid rgba(98,201,74,.4);border-bottom:1px solid rgba(98,201,74,.4)}
+.tl .h{position:absolute;top:-1px;bottom:-1px;width:18px;margin-left:-9px;cursor:ew-resize;z-index:2}
+.tl .h::before{content:"";position:absolute;top:0;bottom:0;left:6px;width:6px;background:var(--win);border-radius:3px}
+.tl .h::after{content:"";position:absolute;top:50%;left:8px;width:2px;height:12px;margin-top:-6px;background:var(--win-ink);opacity:.6}
+.tl .h:hover::before{background:#7fdc68}
+.tl .ph{position:absolute;top:0;bottom:0;width:2px;background:#fff;pointer-events:none;z-index:1}
+.tl .pk{position:absolute;top:0;bottom:0;width:0;border-left:1px dashed var(--bonus);pointer-events:none;opacity:.8}
+.tl .pk::after{content:"spike";position:absolute;top:-17px;left:-14px;font-size:10.5px;color:var(--bonus)}
+.tl .lab{position:absolute;bottom:-20px;font-family:var(--mono);font-size:11px;color:var(--text2);transform:translateX(-50%);white-space:nowrap}
+.trim .acts{display:flex;gap:8px;align-items:center;margin-top:30px;flex-wrap:wrap}
+.trim .acts .len{font-family:var(--mono);font-size:12.5px;color:var(--mute);padding:0 6px}
+.xp{display:flex;align-items:center;gap:12px;margin-left:auto}
+.xp .note{font-size:12px;color:var(--dim);text-align:right;line-height:1.45}
+.xp .note b{color:var(--text2);font-weight:500}
+.vrow{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.vrow select{padding:6px 10px}
+.vrow .pick{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);cursor:pointer}.vrow .pick input{accent-color:var(--win)}
+.vrow .pick:has(input:disabled){color:var(--dim);cursor:default}
+.lay{position:absolute;display:none;touch-action:none}.lay.on{display:block}
+.lay .bx{position:absolute;border:2px solid var(--win);background:rgba(98,201,74,.08);cursor:move}
+.lay .bx.cam{border-color:var(--fun);background:rgba(173,147,214,.1)}
+.lay .bx b{position:absolute;left:0;top:0;font:500 11px/1 var(--sans);background:var(--win);color:var(--win-ink);padding:3px 6px}
+.lay .bx.cam b{background:var(--fun);color:var(--fun-ink)}
+.lay .rs{position:absolute;right:-7px;bottom:-7px;width:14px;height:14px;background:#fff;border-radius:3px;cursor:nwse-resize}
+.player.edit{padding-right:calc(54vh*9/16 + 24px)}
+.vprev{position:absolute;right:12px;top:12px;bottom:12px;height:calc(100% - 24px);aspect-ratio:9/16;background:#000;border:1px solid var(--line2);border-radius:var(--r);display:none}.vprev.on{display:block}
+.tray{margin:14px 16px 20px;border:1px solid var(--line);border-radius:var(--r2);background:var(--panel)}
+.tray .hd{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line)}
+.tray .hd h3{font-size:14px}
+.tray .hd .n{font-family:var(--mono);font-size:11px;color:var(--mute)}
+.clips{display:flex;gap:12px;overflow-x:auto;padding:14px 16px;scroll-snap-type:x proximity}
+.clips .none{color:var(--dim);font-size:13px;padding:6px 0}
+.clip{flex:none;width:236px;scroll-snap-align:start;display:flex;flex-direction:column;gap:6px}
+.clip video{width:236px;aspect-ratio:16/9;background:#000;border-radius:var(--r);display:block}
+.clip .nm{font-family:var(--mono);font-size:11px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.clip .res{font-family:var(--mono);font-size:10px;color:var(--mute);border:1px solid var(--line2);padding:1px 5px;border-radius:3px}
+.clip a{display:inline-flex;color:var(--mute)}.clip a:hover{color:var(--text)}.clip a svg{width:14px;height:14px}.clip a.x:hover{color:var(--bad)}
+.clip .pick{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;color:var(--mute);cursor:pointer;white-space:nowrap}.clip .pick input{margin:0;accent-color:var(--win)}
+
+/* ------------------------------------------------------------ settings, toast */
+.drawer{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:20}
+.drawer.on{display:flex}
+.card{background:var(--panel);border:1px solid var(--line2);border-radius:10px;width:min(540px,92vw);max-height:92vh;box-shadow:0 20px 50px rgba(0,0,0,.45);overflow:auto}
+.card .hd{padding:18px 22px 14px;border-bottom:1px solid var(--line)}
+.card .hd h1{font-size:19px}
+.card .bd{padding:6px 22px 18px}
+.card label{display:block;margin:16px 0 6px;color:var(--text2);font-size:13px;font-weight:500}
+.card label small{color:var(--mute);font-weight:400;margin-left:6px}
+.card input,.card select{width:100%}
+.card .ft{display:flex;gap:8px;justify-content:flex-end;padding:14px 22px;border-top:1px solid var(--line);background:var(--bg2)}
+.toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,12px);background:var(--raised);border:1px solid var(--line2);padding:10px 16px;border-radius:var(--r2);box-shadow:0 10px 30px rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;z-index:30;font-size:14px;max-width:min(560px,90vw)}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.toast.bad{border-color:var(--bad);color:var(--bad)}
+
+@media (max-width:960px){
+  .wrap{padding:20px 16px 48px}.hero h1{font-size:22px}
+  .rv{grid-template-columns:1fr;height:auto}
+  .list{border-right:0;border-bottom:1px solid var(--line);max-height:42vh}
+  .main{overflow:visible}
+  .strip,.trim,.tray{margin-left:12px;margin-right:12px}
+  .keys{display:none}
+  .xp{margin-left:0;width:100%}.xp .note{text-align:left}
+  .big{font-size:44px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="top">
+  <span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/></svg><span>Clip<b>Sniper</b></span></span>
+  <span class="crumb" id="crumb"></span>
+  <span class="sp"></span>
+  <button class="g" id="homeBtn" onclick="go('home')">VODs</button>
+  <button class="g" onclick="openSettings()">Settings</button>
+</div>
+
+<!-- HOME -->
+<section class="view" id="v-home"><div class="wrap">
+  <div class="hero">
+    <div><div class="eyebrow">Kick · slot streams</div><h1>Pick a VOD</h1><div class="sub">Type a channel, or paste a kick.com VOD link. ClipSniper scans the audio, reads the wins off the screen, and lines them up for you.</div></div>
+    <span class="sp"></span>
+    <form class="cmd" onsubmit="event.preventDefault();goInput()">
+      <span class="pre">kick.com/</span>
+      <input id="chan" placeholder="channel, or paste a VOD link" autocomplete="off" spellcheck="false">
+      <button class="p" type="submit">Load</button>
+    </form>
+  </div>
+  <div id="queue"></div>
+  <div id="runs"></div>
+  <div class="sec"><h2 id="vodsHead">Recent streams</h2><span class="n" id="vodsN"></span></div>
+  <div class="grid" id="vods"><div class="empty"><b>No channel yet</b>Enter a Kick channel above and press Load.</div></div>
+</div></section>
+
+<!-- RUN -->
+<section class="view" id="v-run"><div class="wrap"><div class="run">
+  <div class="eyebrow">Scanning</div>
+  <h1 id="runTitle">Scanning…</h1>
+  <div class="mute" id="runSub"></div>
+  <div class="big"><span id="runPct">0</span><small>%</small></div>
+  <div class="bar"><i id="runBar"></i></div>
+  <div class="stage"><span class="dot" id="runDot"></span><span id="runStage" class="mute">Starting…</span><span class="sp"></span><span id="runCost" class="mono mute"></span></div>
+  <div class="log" id="runLog"></div>
+  <div class="row" style="margin-top:16px"><button class="p" id="runOpen" style="display:none" onclick="openRun(state.run)">Open review</button><button class="s" onclick="go('home')">Back</button></div>
+</div></div></section>
+
+<!-- REVIEW -->
+<section class="view" id="v-review"><div class="rv">
+  <aside class="list">
+    <div class="tabs">
+      <div class="seg" role="tablist"><button class="on" role="tab" onclick="setFilter('worthy',this)">Clip-worthy<span id="nW"></span></button><button role="tab" onclick="setFilter('all',this)">All spikes<span id="nA"></span></button></div>
+      <span class="sp"></span>
+      <button class="g" onclick="rerun()" title="Classify the cached spikes again with another model">Re-run</button>
+    </div>
+    <div id="moms"></div>
+  </aside>
+  <div class="main">
+    <div class="player"><video id="video" playsinline></video><span class="q" id="pq"></span><div class="lay" id="lay"></div><canvas class="vprev" id="vprev" width="270" height="480" title="What the vertical export looks like"></canvas></div>
+    <div class="ctl">
+      <button class="pp" id="pp" onclick="togglePlay()" aria-label="Play"></button>
+      <span class="tc"><span id="cur">0:00:00</span> <span class="dim">/ <span id="dur">–</span></span></span>
+      <button class="s" onclick="seekRel(-5)">−5s</button><button class="s" onclick="seekRel(5)">+5s</button>
+      <span class="sp"></span>
+      <span class="keys"><span><kbd>Space</kbd> play</span><span><kbd>←</kbd><kbd>→</kbd> 5s</span><span><kbd>⇧</kbd>+arrows 1s</span><span><kbd>I</kbd> in</span><span><kbd>O</kbd> out</span><span><kbd>E</kbd> export</span><span><kbd>V</kbd> vertical</span><span><kbd>J</kbd><kbd>K</kbd> prev/next</span></span>
+    </div>
+    <div class="strip" id="strip" title="Whole VOD. Click to seek."></div>
+    <div class="trim">
+      <div class="hd">
+        <span class="ttl" id="selTitle">Select a moment</span><span class="chip" id="selKind" style="display:none"></span>
+        <span class="sp"></span><a id="kickLink" target="_blank" rel="noopener" style="display:none">Open on Kick ↗</a>
+        <span class="desc" id="selDesc"></span>
+      </div>
+      <div class="bd">
+        <div class="tl" id="tl"><div class="pk" id="tlPk"></div><div class="sel" id="tlSel"></div><div class="h" id="hIn" title="Drag to set in point"></div><div class="h" id="hOut" title="Drag to set out point"></div><div class="ph" id="tlPh"></div><span class="lab" id="labIn"></span><span class="lab" id="labOut"></span></div>
+        <div class="acts">
+          <button class="s" onclick="setIn()">Set in <kbd>I</kbd></button><button class="s" onclick="setOut()">Set out <kbd>O</kbd></button>
+          <span class="len" id="selLen"></span>
+          <button class="s" onclick="previewSel()">Preview in→out</button>
+          <div class="xp">
+            <span class="note">Exports <b id="xq">top rendition</b><br>source copy · no re-encode</span>
+            <input id="clipName" placeholder="clip name (optional)" style="width:200px">
+            <button class="s" id="exportVBtn" onclick="exportClip(true)" title="1080×1920 re-encode for TikTok and Shorts">Export vertical <kbd>V</kbd></button>
+            <button class="p" id="exportBtn" onclick="exportClip()">Export clip <kbd style="background:rgba(0,0,0,.14);border-color:rgba(0,0,0,.2);color:inherit">E</kbd></button>
+          </div>
+        </div>
+        <div class="vrow">
+          <span class="eyebrow">Vertical</span>
+          <select id="vMode" onchange="state.lay.mode=this.value;saveLay();drawLay()" aria-label="Vertical layout"><option value="blur">Blurred background</option><option value="split">Cam on top, game below</option></select>
+          <button class="s" id="layBtn" onclick="toggleLay()">Edit layout</button>
+          <label class="pick" id="vCapL"><input type="checkbox" id="vCap">Burn in captions</label>
+          <span class="mute" id="layHint" style="font-size:12.5px"></span>
+        </div>
+      </div>
+    </div>
+    <div class="tray">
+      <div class="hd"><h3>Exported clips</h3><span class="n" id="nC"></span><span class="sp"></span><button class="s" id="reelBtn" disabled onclick="stitchReel()" title="Concatenate the checked clips into one file, no re-encode">Stitch reel</button><button class="g" onclick="api('POST','/api/open',{run:state.run})">Open folder</button></div>
+      <div id="clips" class="clips"><span class="none">Nothing exported yet.</span></div>
+    </div>
+  </div>
+</div></section>
+
+<!-- SETTINGS -->
+<div class="drawer" id="drawer" onclick="if(event.target===this)closeSettings()"><div class="card" role="dialog" aria-labelledby="sTitle">
+  <div class="hd"><div class="eyebrow">ClipSniper</div><h1 id="sTitle">Settings</h1></div>
+  <div class="bd">
+    <label for="sChan">Kick channel</label><input id="sChan" placeholder="gamducks">
+    <label for="sKey">Anthropic API key<small>console.anthropic.com · stored locally</small></label><input id="sKey" type="password" placeholder="sk-ant-…" autocomplete="off">
+    <label for="sModel">Model</label><select id="sModel">
+      <option value="claude-haiku-4-5">claude-haiku-4-5 · cheapest (~$0.30 / 4h VOD), sloppier reads</option>
+      <option value="claude-sonnet-5">claude-sonnet-5 · default (~$0.65 / 4h VOD)</option>
+      <option value="claude-opus-5">claude-opus-5 · most accurate (~$1.60 / 4h VOD)</option>
+    </select>
+    <label for="sTop">Audio spikes to check per VOD<small>more spikes, more cost, fewer misses</small></label><input id="sTop" type="number" min="10" max="200">
+    <label for="sMult">Big win: multiplier<small>win ÷ bet at or above this is a big win</small></label><input id="sMult" type="number" min="1">
+    <label for="sWin">Big win: amount<small>a win of this many dollars or more is a big win, whatever the bet</small></label><input id="sWin" type="number" min="1">
+    <label for="sTKey">Transcription API key<small>optional · Groq gsk_… or OpenAI · unlocks funny moments and better reads · Groq free tier caps at 2 h of audio per hour</small></label><input id="sTKey" type="password" placeholder="gsk_… or sk-…" autocomplete="off">
+    <div class="eyebrow" style="margin-top:22px">Storage</div>
+    <div class="mono" id="sStore" style="margin-top:6px">…</div>
+    <div class="mono dim" id="sPath" style="font-size:12px;word-break:break-all"></div>
+    <button class="g" style="margin:8px 0 0 -10px" onclick="api('POST','/api/open',{})">Open out folder</button>
+  </div>
+  <div class="ft"><button class="s" onclick="closeSettings()">Cancel</button><button class="p" onclick="saveSettings()">Save</button></div>
+</div></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const state={cfg:{},vods:[],run:null,data:null,filter:'worthy',sel:null,inT:0,outT:0,hls:null,poll:null,strip:[],runStarted:0,reel:new Set(),jobs:[],qpoll:null,qsig:''};
+const ICON={play:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l12-7.5z"/></svg>',pause:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4.5v16H6zM13.5 4H18v16h-4.5z"/></svg>',
+ check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg>',
+ dl:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M6 10l6 6 6-6M4 20h16"/></svg>',
+ x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>'};
+const hms=t=>{t=Math.max(0,Math.floor(t));return `${Math.floor(t/3600)}:${String(Math.floor(t%3600/60)).padStart(2,'0')}:${String(t%60).padStart(2,'0')}`};
+const fmtBytes=n=>n<1e3?n+' B':n<1e6?Math.round(n/1e3)+' KB':n<1e9?(n/1e6).toFixed(1)+' MB':(n/1e9).toFixed(1)+' GB';
+const toast=(m,bad)=>{const e=$('#toast');e.textContent=m;e.className='toast on'+(bad?' bad':'');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),3200)};
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const mult=r=>r.multiplier?esc(r.multiplier).replace(/x$/i,'×'):'';
+const daysLeft=d=>d?Math.ceil((new Date(d)-Date.now())/864e5):null;
+async function api(method,path,body){const r=await fetch(path,{method,headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});const j=await r.json().catch(()=>({}));if(!r.ok){toast(j.error||r.statusText,true);throw new Error(j.error||r.statusText)}return j}
+function go(v){document.querySelectorAll('.view').forEach(e=>e.classList.remove('on'));$('#v-'+v).classList.add('on');if(v!=='review')$('#crumb').textContent=v==='run'?'scanning':'';if(v!=='review'&&state.hls){state.hls.destroy();state.hls=null;$('#video').removeAttribute('src')}}
+
+/* ---------- home ---------- */
+async function boot(){$('#pp').innerHTML=ICON.play;go('home');state.cfg=await api('GET','/api/config');$('#chan').value=state.cfg.channel||'';if(!state.cfg.api_key){openSettings();toast('Add your Anthropic API key to start')}else if(state.cfg.channel){loadVods()}loadRuns();const p=new URLSearchParams(location.search);if(p.get('run'))openRun(p.get('run'));pollQueue()}
+const fin=j=>j.stage==='done'||j.stage==='error',act=run=>state.jobs.find(j=>j.run===run&&!fin(j));
+async function pollQueue(){try{state.jobs=await api('GET','/api/jobs')}catch(e){return}const a=state.jobs.filter(j=>!fin(j)),sig=a.map(j=>j.run+(j.stage==='queued')).join();if(sig!==state.qsig){state.qsig=sig;loadRuns();if(state.vods.length)loadVods()}renderQueue(state.jobs);clearTimeout(state.qpoll);state.qpoll=a.length?setTimeout(pollQueue,2000):null}
+function renderQueue(jobs){const a=jobs.filter(j=>!fin(j));$('#queue').innerHTML=a.length?`<div class="sec"><h2>Scan queue</h2><span class="n">${a.length}</span></div>`+a.map(j=>`<div class="q" onclick="openJob('${j.run}')"><b>${esc(j.title||j.run)}</b><span class="mute mono">${j.minutes} min</span><span class="sp"></span>${j.stage==='queued'?`<span class="chip">queued · ${j.ahead} ahead</span>`:`<span class="bar"><i style="width:${j.pct||0}%"></i></span><span class="pct">${j.pct||0}%</span><span class="chip done">scanning</span>`}</div>`).join(''):''}
+function openJob(run){const j=state.jobs.find(x=>x.run===run)||{};state.run=run;go('run');$('#runTitle').textContent=j.title||run;$('#runSub').textContent=`${run} · ${j.minutes??'?'} min`;$('#runLog').textContent='';$('#runPct').textContent=j.pct||0;$('#runBar').style.width=(j.pct||0)+'%';$('#runOpen').style.display='none';$('#runDot').style.display='';pollRun()}
+function goInput(){const v=$('#chan').value.trim();/kick\.com\/[^\/]+\/videos\//i.test(v)?pasteGo(v):loadVods()}
+async function loadRuns(){const rs=await api('GET','/api/runs');if(!rs.length){$('#runs').innerHTML='';return}
+ $('#runs').innerHTML=`<div class="sec"><h2>Previous scans</h2><span class="n">${rs.length}</span></div><div class="grid">`+rs.map(r=>`<div class="vod"><div class="thumb"><img src="/out/${r.run}/frames/${String(Math.max(1,Math.floor((r.frames||2)/2))).padStart(5,'0')}.jpg" onerror="this.style.visibility='hidden'" alt=""><span class="tag chip done">${r.worthy} clip-worthy</span><span class="dur">${r.minutes} min</span></div><div class="b"><div class="t">${esc(r.title||r.run)}</div><div class="m"><span>${r.channel}</span><span>${r.date}</span><span>${r.total} spikes</span><span>${esc(r.model)}</span><span class="mono">$${(r.cost||0).toFixed(2)}</span></div><div class="acts"><button class="p" onclick="openRun('${r.run}')">Open review</button><button class="d" onclick="deleteRun('${r.run}')" title="Delete cached audio, frames and results. Clips are kept.">Delete</button></div></div></div>`).join('')+'</div>'}
+async function loadVods(){const ch=$('#chan').value.trim().toLowerCase().replace(/^@/,'').replace(/^kick\.com\//,'');if(!ch)return;$('#vods').innerHTML='<div class="empty"><b>Loading…</b>Asking Kick for recent streams.</div>';$('#vodsN').textContent='';
+ try{state.vods=await api('GET','/api/vods?channel='+encodeURIComponent(ch))}catch(e){$('#vods').innerHTML='<div class="empty"><b>Could not load that channel</b>Check the spelling, or try again in a moment.</div>';return}
+ $('#vodsHead').textContent=`Recent streams · kick.com/${ch}`;$('#vodsN').textContent=state.vods.length?`${state.vods.length} VODs`:'';
+ $('#vods').innerHTML=state.vods.map(v=>{const d=daysLeft(v.expires);const exp=d==null?'':`<span class="${d<=3?'warn':''}">${d<=0?'expiring today':`gone in ${d} d`}</span>`;
+  return `<div class="vod"><div class="thumb"><img src="${v.thumb}" loading="lazy" referrerpolicy="no-referrer" alt="">${v.done?'<span class="tag chip done">scanned</span>':''}<span class="dur">${v.minutes} min</span></div><div class="b"><div class="t">${esc(v.title)}</div><div class="m"><span>${v.date}</span>${exp}</div><div class="acts">${act(v.run)?`<span class="chip ${act(v.run).stage==='queued'?'':'done'}" onclick="openJob('${v.run}')" style="cursor:pointer;align-self:center">${act(v.run).stage==='queued'?'queued':'scanning'}</span>`:v.done?`<button class="p" onclick="openRun('${v.run}')">Open review</button><button class="s" onclick="startRun('${ch}',${v.id})">Scan again</button>`:`<button class="p" onclick="startRun('${ch}',${v.id})">Find moments</button>`}</div></div></div>`}).join('')||'<div class="empty"><b>No finished VODs</b>Kick only lists the last 30, and live streams are skipped.</div>'}
+async function deleteRun(run){if(!confirm(`Delete the scan ${run}?
+
+Removes the cached audio, frames and results. Exported clips stay in out/${run}/clips. Scanning this VOD again costs the full extraction and API run.`))return;const r=await api('POST','/api/delete',{run});toast(r.kept_clips?`Deleted ${run} · ${r.kept_clips} clip${r.kept_clips>1?'s':''} kept`:`Deleted ${run}`);loadRuns();if(state.vods.length)loadVods()}
+async function pasteGo(v){const m=v.match(/kick\.com\/([^\/]+)\/videos\/([0-9a-f-]{36})/i);if(!m)return toast('That does not look like a Kick VOD link',true);$('#chan').value=m[1];await loadVods();const x=state.vods.find(x=>x.page_id===m[2]);if(!x)return toast('That VOD is not in the channel\'s recent list',true);x.done?openRun(x.run):startRun(m[1],x.id)}
+async function startRun(channel,id){if(!state.cfg.api_key){openSettings();return toast('Add your API key first',true)}const v=state.vods.find(x=>x.id===id);const model=state.cfg.model||'claude-sonnet-5';const est=(v?.est||{})[model];
+ if(!confirm(`Scan "${(v?.title||'').slice(0,50)}" (${v?.minutes} min)?\n\nAbout ${Math.round(v?.minutes/20)} min of extraction, then roughly $${est?.toFixed(2)||'?'} of API on ${model}${state.cfg.transcribe_key?' (incl. transcript)':''}.`))return;armRun();
+ const r=await api('POST','/api/run',{channel,id});await pollQueue();const q=state.jobs.find(x=>x.run===r.run);if(q?.ahead)return toast(`Queued · ${q.ahead} ahead`);state.run=r.run;go('run');$('#runTitle').textContent=v?.title||r.run;$('#runSub').textContent=`${channel} · ${v?.date} · ${v?.minutes} min · ${model}`;$('#runLog').textContent='';$('#runPct').textContent='0';$('#runBar').style.width='0';$('#runOpen').style.display='none';$('#runDot').style.display='';pollRun()}
+function armRun(){state.runStarted=Date.now();if('Notification' in window&&Notification.permission==='default')Notification.requestPermission()}
+function notify(title,body,run){try{if(!('Notification' in window)||Notification.permission!=='granted')return;new Notification(title,{body}).onclick=()=>{window.focus();if(run)openRun(run)}}catch(e){}}
+function pollRun(){clearInterval(state.poll);state.poll=setInterval(async()=>{const s=await api('GET','/api/status?run='+state.run);$('#runStage').textContent=s.stage==='queued'?`Queued · ${s.ahead} ahead`:(s.message||s.stage);$('#runBar').style.width=(s.pct||0)+'%';$('#runPct').textContent=Math.round(s.pct||0);$('#runCost').textContent=s.cost?`API so far $${s.cost.toFixed(2)}`:'';$('#runLog').textContent=(s.log||[]).join('\n');$('#runLog').scrollTop=1e9;document.title=s.stage==='queued'?'Queued · ClipSniper':`${Math.round(s.pct||0)}% · ClipSniper`;
+ if(s.stage==='done'||s.stage==='error'){clearInterval(state.poll);$('#runDot').style.display='none';document.title='ClipSniper';const want=document.hidden||Date.now()-state.runStarted>6e4;if(s.stage==='done'){$('#runOpen').style.display='';if(want)notify('ClipSniper · scan finished',s.message||$('#runTitle').textContent,state.run);openRun(state.run)}else{toast(s.message,true);if(want)notify('ClipSniper · scan failed',s.message)}}},1000)}
+async function rerun(){const m=prompt('Model for the re-run (frames are cached, only the vision step is paid):',state.cfg.model||'claude-sonnet-5');if(!m)return;armRun();const r=await api('POST','/api/run',{run:state.run,model:m});state.run=r.run;go('run');$('#runTitle').textContent='Re-scanning '+state.run;$('#runSub').textContent=m;$('#runDot').style.display='';pollRun();pollQueue()}
+
+/* ---------- review ---------- */
+async function openRun(run){state.run=run;state.data=await api('GET','/api/moments?run='+run);history.replaceState(null,'','?run='+run);go('review');const c=state.data.ctx;$('#crumb').innerHTML=`<b>${esc(c.channel)}</b> · ${c.date} · ${c.minutes} min · ${esc(c.model)}`;
+ $('#nW').textContent=state.data.results.filter(r=>r.clip_worthy).length;$('#nA').textContent=state.data.results.length;$('#xq').textContent=c.quality||'top rendition';
+ state.lay=JSON.parse(JSON.stringify((state.cfg.layouts||{})[c.channel]||LAY_DEF));$('#vMode').value=state.lay.mode;const tk=!!state.cfg.transcribe_key;$('#vCap').disabled=!tk;if(!tk)$('#vCap').checked=false;$('#vCapL').title=tk?'Transcribes the clip with word timings (Groq/OpenAI, under a cent a minute)':'Add a transcription key in Settings to burn in captions';state.layEdit=false;drawLay();
+ renderList();renderStrip();renderClips(state.data.clips);loadVideo(c.hls);const first=state.data.results.find(r=>r.clip_worthy)||state.data.results[0];if(first)select(first)}
+function setFilter(f,btn){state.filter=f;document.querySelectorAll('.tabs .seg button').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderList()}
+function visible(){return state.data.results.filter(r=>state.filter==='all'||r.clip_worthy)}
+function renderList(){$('#moms').innerHTML=visible().map(r=>{const hero=mult(r)?`${mult(r)}${r.win_amount?`<small>${esc(r.win_amount)}${r.buy_cost?` · buy ${r.buy_cost}`:''}</small>`:''}`:esc(r.win_amount||r.kind.replace('_',' '));
+ return `<div class="mom ${state.sel&&state.sel.t===r.t?'on':''}" data-t="${r.t}" role="button" tabindex="0" onclick="selectT(${r.t})" onkeydown="if(event.key==='Enter')selectT(${r.t})"><img src="/out/${state.run}/frames/peak_${Math.floor(r.t)}_+3.jpg" loading="lazy" alt=""><div><div class="h"><span class="chip ${r.kind}">${r.kind.replace('_',' ')}</span><span class="tc">${hms(r.t)}</span></div><div class="x ${r.kind}">${hero}</div><div class="d"><b style="color:var(--text2)">${esc(r.slot)}</b>${r.slot?' · ':''}${esc(r.what_happens)}</div>${r.quote?`<div class="qt">“${esc(r.quote)}”</div>`:''}</div>${r.exported?`<span class="ex" title="${esc(r.exported)}">${ICON.check}saved</span>`:''}</div>`}).join('')||'<div class="empty" style="margin:16px"><b>Nothing here</b>No moments in this tab.</div>'}
+function renderStrip(){const n=state.data.ctx.frames||0,dur=state.data.ctx.minutes*60,want=Math.min(n,Math.max(12,Math.floor($('#strip').clientWidth/80)));const el=$('#strip');el.innerHTML='';state.strip=[];for(let k=0;k<want;k++){const i=1+Math.floor(k*(n-1)/Math.max(1,want-1));const img=document.createElement('img');img.src=`/out/${state.run}/frames/${String(i).padStart(5,'0')}.jpg`;img.loading='lazy';img.alt='';el.appendChild(img)}
+ for(const r of state.data.results){const m=document.createElement('i');m.className='mk '+r.kind;m.style.left=(100*r.t/dur)+'%';m.title=`${hms(r.t)} ${r.slot} ${r.multiplier}`;el.appendChild(m)}const ph=document.createElement('i');ph.className='ph';ph.id='sph';el.appendChild(ph);
+ el.onclick=e=>{const x=(e.clientX-el.getBoundingClientRect().left)/el.clientWidth;seek(x*dur)}}
+function loadVideo(url){const v=$('#video');if(state.hls)state.hls.destroy();$('#pq').className='q';if(window.Hls&&Hls.isSupported()){state.hls=new Hls({maxBufferLength:20,startPosition:-1});state.hls.loadSource(url);state.hls.attachMedia(v)}else{v.src=url}
+ v.ontimeupdate=()=>{$('#cur').textContent=hms(v.currentTime);const dur=state.data.ctx.minutes*60;$('#sph').style.left=(100*v.currentTime/dur)+'%';drawTl();if(state._stopAt!=null&&v.currentTime>=state._stopAt){v.pause();state._stopAt=null}};
+ v.onloadedmetadata=()=>{$('#dur').textContent=hms(v.duration||state.data.ctx.minutes*60);if(v.videoHeight){$('#pq').textContent=`preview ${v.videoHeight}p`;$('#pq').className='q on'}};
+ v.onplay=()=>{$('#pp').innerHTML=ICON.pause;$('#pp').setAttribute('aria-label','Pause')};v.onpause=()=>{$('#pp').innerHTML=ICON.play;$('#pp').setAttribute('aria-label','Play')}}
+function selectT(t){select(state.data.results.find(r=>r.t===t))}
+function select(r){state.sel=r;state.inT=Math.max(0,r.start??r.t-35);state.outT=r.end??r.t+30;$('#selTitle').innerHTML=`<span class="t">${hms(r.t)}</span>${esc(r.slot||r.kind.replace('_',' '))} ${r.win_amount?esc(r.win_amount):''} ${mult(r)}${r.buy_cost?` · bought for ${r.buy_cost}`:''}`;const k=$('#selKind');k.style.display='';k.className='chip '+r.kind;k.textContent=r.kind.replace('_',' ');$('#selDesc').textContent=r.what_happens+(r.quote?` — “${r.quote}”`:'');const kl=$('#kickLink');kl.href=`${state.data.ctx.page}?t=${Math.floor(r.t)}`;kl.style.display='';$('#clipName').value='';renderList();seek(state.inT);drawTl();const el=document.querySelector(`.mom[data-t="${r.t}"]`);if(el)el.scrollIntoView({block:'nearest'})}
+function tlRange(){const c=state.sel?state.sel.t:0;return [Math.max(0,Math.min(c-100,state.inT-15)),Math.max(c+100,state.outT+15)]}
+function drawTl(){if(!state.sel)return;const [a,b]=tlRange(),w=x=>(100*(x-a)/(b-a))+'%';$('#tlPk').style.left=w(state.sel.t);$('#tlSel').style.left=w(state.inT);$('#tlSel').style.width=(100*(state.outT-state.inT)/(b-a))+'%';$('#hIn').style.left=w(state.inT);$('#hOut').style.left=w(state.outT);$('#tlPh').style.left=w($('#video').currentTime||0);$('#labIn').style.left=w(state.inT);$('#labIn').textContent=hms(state.inT);$('#labOut').style.left=w(state.outT);$('#labOut').textContent=hms(state.outT);$('#selLen').textContent=`${Math.round(state.outT-state.inT)} s clip`}
+(function(){const tl=$('#tl');let drag=null;const pos=e=>{const [a,b]=tlRange();const x=Math.min(1,Math.max(0,(e.clientX-tl.getBoundingClientRect().left)/tl.clientWidth));return a+x*(b-a)};
+ tl.addEventListener('pointerdown',e=>{if(!state.sel)return;tl.setPointerCapture(e.pointerId);if(e.target.id==='hIn')drag='in';else if(e.target.id==='hOut')drag='out';else{drag=null;seek(pos(e))}});
+ tl.addEventListener('pointermove',e=>{if(!drag)return;const t=pos(e);if(drag==='in')state.inT=Math.min(t,state.outT-2);else state.outT=Math.max(t,state.inT+2);drawTl()});
+ tl.addEventListener('pointerup',e=>{if(drag){seek(drag==='in'?state.inT:Math.max(state.inT,state.outT-3))}drag=null})})();
+function seek(t){const v=$('#video');v.currentTime=Math.max(0,t)}function seekRel(d){seek(($('#video').currentTime||0)+d)}
+function togglePlay(){const v=$('#video');v.paused?v.play():v.pause()}
+function setIn(){state.inT=$('#video').currentTime;if(state.outT<=state.inT+2)state.outT=state.inT+30;drawTl()}function setOut(){state.outT=$('#video').currentTime;if(state.inT>=state.outT-2)state.inT=Math.max(0,state.outT-30);drawTl()}
+function previewSel(){seek(state.inT);state._stopAt=state.outT;$('#video').play()}
+function step(d){const vis=visible();const i=vis.findIndex(r=>state.sel&&r.t===state.sel.t);const n=vis[Math.min(vis.length-1,Math.max(0,i+d))];if(n)select(n)}
+async function exportClip(vertical){if(!state.sel)return;const b=$(vertical?'#exportVBtn':'#exportBtn'),o=$(vertical?'#exportBtn':'#exportVBtn');if(b.disabled||o.disabled)return;b.disabled=o.disabled=true;const was=b.innerHTML;b.textContent=vertical?'Encoding…':'Cutting…';try{const cap=!!vertical&&$('#vCap').checked;if(cap)b.textContent='Transcribing…';const r=await api('POST','/api/cut',{run:state.run,t:state.sel.t,start:state.inT,end:state.outT,name:$('#clipName').value,vertical:!!vertical,layout:state.lay,captions:cap});state.sel.exported=r.file;if(r.quality&&!vertical)$('#xq').textContent=r.quality;renderList();renderClips(r.clips);toast(`Saved ${r.file} · ${r.quality||'source copy'}`)}finally{b.disabled=o.disabled=false;b.innerHTML=was}}
+function renderClips(list){list=list||[];state.data.clips=list;state.reel=new Set();reelBtn();$('#nC').textContent=list.length||'';$('#clips').innerHTML=list.length?list.map(f=>{const u=`/out/${state.run}/clips/${encodeURIComponent(f)}`;return `<div class="clip"><video src="${u}" controls preload="metadata" onloadedmetadata="this.parentNode.querySelector('.res').textContent=this.videoWidth+'×'+this.videoHeight"></video><div class="row" style="gap:8px;flex-wrap:nowrap"><span class="nm" title="${esc(f)}">${esc(f)}</span><span class="res"></span>${/_vertical(_\d+)?\.mp4$/.test(f)?'':`<label class="pick" title="Include in a stitched reel"><input type="checkbox" onchange="pickReel('${esc(f)}',this.checked)">reel</label>`}<a href="${u}" download title="Download">${ICON.dl}</a><a href="#" class="x" title="Delete" onclick="deleteClip(${esc(JSON.stringify(f))});return false">${ICON.x}</a></div></div>`}).join(''):'<span class="none">Nothing exported yet. Set in and out, then press E.</span>';if(list.length)$('#clips').scrollLeft=1e9}
+async function deleteClip(f){if(!confirm(`Delete ${f}?`))return;const r=await api('POST','/api/clip/delete',{run:state.run,file:f});renderClips(r.clips);for(const m of state.data.results)if(m.exported===f)delete m.exported;renderList();toast('Deleted '+f)}
+function pickReel(f,on){state.reel[on?'add':'delete'](f);reelBtn()}
+function reelBtn(){const b=$('#reelBtn'),n=state.reel.size;b.disabled=n<2;b.textContent=n>1?`Stitch ${n} into reel`:'Stitch reel'}
+async function stitchReel(){const name=prompt('Reel name (blank for reel_N):','');if(name===null)return;const files=state.data.clips.filter(f=>state.reel.has(f));const b=$('#reelBtn');b.disabled=true;b.textContent='Stitching…';try{const r=await api('POST','/api/reel',{run:state.run,files,name});renderClips(r.clips);toast('Saved '+r.file)}finally{reelBtn()}}
+/* ---------- vertical layout: boxes are [x,y,w,h] fractions of the frame, aspect-locked to their panel in the 1080x1920 output ---------- */
+const LAY_A={cam:1080/768,game:1080/1152},LAY_DEF={mode:'blur',cam:[.7,.62,.3,.38],game:[.27,.07,.46,.87]};
+const var_=()=>{const v=$('#video');return v.videoWidth/v.videoHeight||16/9};
+function fitBox(k){let [x,y,w,h]=state.lay[k];h=w*var_()/LAY_A[k];if(h>1){h=1;w=h*LAY_A[k]/var_()}state.lay[k]=[Math.min(x,1-w),Math.min(y,1-h),w,h]}
+function toggleLay(){state.layEdit=!state.layEdit;drawLay()}
+function saveLay(){const ch=state.data.ctx.channel;state.cfg.layouts={...(state.cfg.layouts||{}),[ch]:state.lay};api('POST','/api/config',{layouts:state.cfg.layouts}).catch(()=>{})}
+function drawLay(){const on=!!state.layEdit,split=state.lay.mode==='split',L=$('#lay');$('#layBtn').textContent=on?'Done':'Edit layout';$('#vprev').classList.toggle('on',on);L.parentNode.classList.toggle('edit',on);L.classList.toggle('on',on&&split);
+ $('#layHint').textContent=on?(split?'Drag the boxes over the facecam and the game. Corner resizes.':'The frame sits centred over a blurred copy.'):'';if(on&&!state.prevOn){state.prevOn=true;prevLoop()}if(!(on&&split))return;
+ const v=$('#video'),r=v.getBoundingClientRect(),p=v.parentNode.getBoundingClientRect();let w=r.width,h=w/var_();if(h>r.height){h=r.height;w=h*var_()}
+ Object.assign(L.style,{left:(r.left-p.left+(r.width-w)/2)+'px',top:(r.top-p.top+(r.height-h)/2)+'px',width:w+'px',height:h+'px'});
+ L.innerHTML=['game','cam'].map(k=>{fitBox(k);const [x,y,bw,bh]=state.lay[k];return `<div class="bx ${k}" data-k="${k}" style="left:${x*100}%;top:${y*100}%;width:${bw*100}%;height:${bh*100}%"><b>${k}</b><i class="rs"></i></div>`}).join('')}
+function prevLoop(){if(!state.layEdit||!$('#v-review').classList.contains('on')){state.prevOn=false;return}const c=$('#vprev'),x=c.getContext('2d'),v=$('#video'),W=c.width,H=c.height,vw=v.videoWidth,vh=v.videoHeight;
+ if(vw){if(state.lay.mode==='split'){const t=H*768/1920;for(const [k,dy,dh] of [['cam',0,t],['game',t,H-t]]){const [bx,by,bw,bh]=state.lay[k];x.drawImage(v,bx*vw,by*vh,bw*vw,bh*vh,0,dy,W,dh)}}
+  else{const s=Math.max(W/vw,H/vh);x.filter='blur(8px)';x.drawImage(v,(W-vw*s)/2,(H-vh*s)/2,vw*s,vh*s);x.filter='none';const fh=W*vh/vw;x.drawImage(v,0,(H-fh)/2,W,fh)}}
+ requestAnimationFrame(prevLoop)}
+(function(){const L=$('#lay');let d=null;
+ L.addEventListener('pointerdown',e=>{const b=e.target.closest('.bx');if(!b)return;e.preventDefault();L.setPointerCapture(e.pointerId);const k=b.dataset.k;d={k,rs:e.target.classList.contains('rs'),px:e.clientX,py:e.clientY,b:[...state.lay[k]],R:L.getBoundingClientRect()}});
+ L.addEventListener('pointermove',e=>{if(!d)return;const dx=(e.clientX-d.px)/d.R.width,dy=(e.clientY-d.py)/d.R.height,cl=(n,a,b)=>Math.min(b,Math.max(a,n));let [x,y,w,h]=d.b;
+  if(d.rs){w=cl(w+dx,.05,1-x);h=w*var_()/LAY_A[d.k];if(y+h>1){h=1-y;w=h*LAY_A[d.k]/var_()}}else{x=cl(x+dx,0,1-w);y=cl(y+dy,0,1-h)}state.lay[d.k]=[x,y,w,h];drawLay()});
+ L.addEventListener('pointerup',()=>{if(d)saveLay();d=null})})();
+window.addEventListener('resize',()=>{if(state.layEdit)drawLay()});
+
+document.addEventListener('keydown',e=>{if(!$('#v-review').classList.contains('on')||['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName)||$('#drawer').classList.contains('on'))return;const k=e.key.toLowerCase();
+ if(e.code==='Space'){e.preventDefault();togglePlay()}else if(k==='arrowleft'){seekRel(e.shiftKey?-1:-5)}else if(k==='arrowright'){seekRel(e.shiftKey?1:5)}else if(k==='i')setIn();else if(k==='o')setOut();else if(k==='e')exportClip();else if(k==='v')exportClip(true);else if(k==='j')step(-1);else if(k==='k')step(1)});
+
+/* ---------- settings ---------- */
+function openSettings(){$('#sChan').value=state.cfg.channel||'';$('#sKey').value=state.cfg.api_key||'';$('#sModel').value=state.cfg.model||'claude-sonnet-5';$('#sTop').value=state.cfg.top||60;$('#sMult').value=state.cfg.min_mult??100;$('#sWin').value=state.cfg.min_win??1000;$('#sTKey').value=state.cfg.transcribe_key||'';$('#drawer').classList.add('on');$('#sChan').focus();
+ $('#sStore').textContent='…';$('#sPath').textContent='';api('GET','/api/storage').then(s=>{$('#sStore').textContent=`${fmtBytes(s.bytes)} in ${s.runs} scan${s.runs===1?'':'s'} · ${fmtBytes(s.clips_bytes)} of clips`;$('#sPath').textContent=s.path}).catch(()=>$('#sStore').textContent='')}
+function closeSettings(){$('#drawer').classList.remove('on')}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#drawer').classList.contains('on'))closeSettings()});
+async function saveSettings(){const cfg={channel:$('#sChan').value.trim().toLowerCase().replace(/^@/,''),api_key:$('#sKey').value.trim(),model:$('#sModel').value,top:+$('#sTop').value||60,min_mult:+$('#sMult').value||100,min_win:+$('#sWin').value||1000,transcribe_key:$('#sTKey').value.trim()};state.cfg=await api('POST','/api/config',cfg);closeSettings();$('#chan').value=state.cfg.channel||'';if(state.cfg.channel)loadVods();toast('Saved')}
+window.addEventListener('resize',()=>{if(state.data&&$('#v-review').classList.contains('on'))renderStrip()});
+boot();
+</script>
+</body>
+</html>

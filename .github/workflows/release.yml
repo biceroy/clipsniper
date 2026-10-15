@@ -1,0 +1,23 @@
+name: release
+on:
+  push:
+    tags: ["v*"]
+permissions:
+  contents: write
+jobs:
+  windows-exe:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install . pyinstaller
+      - run: python test_peaks.py
+      - run: python test_judge.py
+      - run: pyinstaller --onefile --console --name clipsniper --paths . --add-data "clipsniper/app.html;clipsniper" --add-data "clipsniper/hls.min.js;clipsniper" clipsniper/__main__.py
+      - run: dist\clipsniper.exe --version
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/clipsniper.exe
+          generate_release_notes: true

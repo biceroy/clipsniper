@@ -1,0 +1,7 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "clipsniper", "runtimeExecutable": "python", "runtimeArgs": ["-m", "clipsniper", "--no-browser", "--port", "8770"], "port": 8770 },
+    { "name": "site", "runtimeExecutable": "python", "runtimeArgs": ["-m", "http.server", "8780", "-d", "site"], "port": 8780 }
+  ]
+}

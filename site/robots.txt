@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://clipsniper.vercel.app/sitemap.xml

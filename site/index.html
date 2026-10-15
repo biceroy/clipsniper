@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ClipSniper: find the big wins in a Kick VOD and cut the clips</title>
+<meta name="description" content="Free Windows app for Kick slot streamers. ClipSniper scans a VOD for big wins and hype moments, reads the slot, bet and win off the screen, and cuts the clips you approve. Horizontal or vertical for TikTok and Shorts.">
+<link rel="canonical" href="https://clipsniper.vercel.app/">
+<meta name="theme-color" content="#0b0d0c">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ClipSniper">
+<meta property="og:url" content="https://clipsniper.vercel.app/">
+<meta property="og:title" content="ClipSniper: find the big wins in a Kick VOD and cut the clips">
+<meta property="og:description" content="Scans a Kick slot-stream VOD for big wins and hype moments, reads the bet and win off the screen, and cuts the clips you approve. Free, runs on your machine.">
+<meta property="og:image" content="https://clipsniper.vercel.app/assets/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Money Train 5 congratulations screen showing a $16,712.80 win from a $0.40 bet, tagged Big win by ClipSniper">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="ClipSniper: find the big wins in a Kick VOD and cut the clips">
+<meta name="twitter:description" content="Scans a Kick slot-stream VOD for big wins and hype moments, reads the bet and win off the screen, and cuts the clips you approve.">
+<meta name="twitter:image" content="https://clipsniper.vercel.app/assets/og.jpg">
+<link rel="preload" as="image" href="assets/hero.jpg">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"ClipSniper","applicationCategory":"MultimediaApplication","operatingSystem":"Windows, macOS, Linux","softwareVersion":"0.3.0","url":"https://clipsniper.vercel.app/","downloadUrl":"https://github.com/biceroy/clipsniper/releases/latest","license":"https://opensource.org/licenses/MIT","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"Finds the big slot wins and hype moments in a Kick VOD, reads the slot, bet and win off the screen, and cuts the clips you approve, horizontal or vertical.","author":{"@type":"Person","name":"biceroy","url":"https://github.com/biceroy"}}
+</script>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2353fc18' stroke-width='2.4'%3E%3Ccircle cx='12' cy='12' r='8'/%3E%3Ccircle cx='12' cy='12' r='2' fill='%2353fc18'/%3E%3Cpath d='M12 1v5M12 18v5M1 12h5M18 12h5'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,700;0,800;1,800&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b0d0c; --panel:#121514; --line:#232826; --ink:#eef2ef; --body:#c3cbc7; --mute:#8a948f; --dim:#7d8782;
+  --go:#53fc18; --go-hi:#7dff4f; --go-ink:#071100; --hot:#ffcc33;
+  --cond:'Barlow Condensed',sans-serif; --sans:'Barlow',sans-serif; --mono:'JetBrains Mono',monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scrollbar-color:#2f3532 var(--bg)}
+body{background:var(--bg);color:var(--ink);font:400 17px/1.55 var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:var(--go);color:var(--go-ink)}
+a{color:inherit;text-underline-offset:3px}
+:focus-visible{outline:2px solid var(--go);outline-offset:3px}
+.wrap{max-width:1320px;margin:0 auto;padding:0 32px}
+.num{font-variant-numeric:tabular-nums}
+
+nav{position:sticky;top:0;z-index:10;background:rgba(11,13,12,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+nav .wrap{display:flex;align-items:center;gap:32px;height:60px}
+.logo{display:flex;align-items:center;gap:10px;font:800 22px/1 var(--cond);letter-spacing:.02em;text-transform:uppercase;text-decoration:none}
+.logo svg{width:22px;height:22px;color:var(--go)}
+.links{display:flex;align-items:center;gap:28px;margin-left:auto;font:500 15px/1 var(--sans);color:var(--mute)}
+.links a:not(.btn){text-decoration:none}
+.links a:not(.btn):hover{color:var(--ink)}
+.btn{display:inline-flex;align-items:center;gap:10px;height:48px;padding:0 22px;font:700 18px/1 var(--cond);text-transform:uppercase;letter-spacing:.04em;text-decoration:none;color:var(--ink);border:1px solid var(--line);transition:background .15s,border-color .15s}
+.btn.go{background:var(--go);color:var(--go-ink);border-color:var(--go)}
+.btn.go:hover{background:var(--go-hi);border-color:var(--go-hi)}
+.btn:not(.go):hover{border-color:var(--mute)}
+.btn.sm{height:38px;padding:0 16px;font-size:16px}
+
+/* hero */
+.hero{padding:80px 0 72px}
+.hero .wrap{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:56px;align-items:center}
+h1{font:800 clamp(46px,5vw,76px)/.92 var(--cond);text-transform:uppercase;letter-spacing:-.01em;text-wrap:balance}
+h1 em{font-style:italic;color:var(--go)}
+.lede{margin:26px 0 34px;max-width:30em;color:var(--body);font-size:19px}
+.ctas{display:flex;gap:12px;flex-wrap:wrap}
+.fine{margin-top:16px;font-size:14px;color:var(--dim)}
+
+.screen{position:relative;background:#000;border:1px solid var(--line);aspect-ratio:16/9;overflow:hidden}
+.screen video{width:100%;height:100%;object-fit:cover;display:block}
+.bug{position:absolute;left:0;bottom:22px;display:flex;align-items:stretch;text-transform:uppercase;box-shadow:0 8px 24px rgba(0,0,0,.55)}
+.bug .k{background:var(--go);color:var(--go-ink);font:800 20px/1 var(--cond);padding:12px 14px;display:flex;align-items:center;letter-spacing:.03em}
+.bug .n{background:var(--bg);padding:8px 16px;display:flex;flex-direction:column;justify-content:center}
+.bug .n small{font:600 11px/1.2 var(--mono);color:var(--mute);letter-spacing:.06em}
+.bug .n strong{font:700 22px/1.1 var(--cond);letter-spacing:.02em}
+.bug .x{background:var(--bg);border-left:1px solid var(--line);padding:0 18px;display:flex;align-items:center;font:800 italic 40px/1 var(--cond);color:var(--hot)}
+.tc{position:absolute;top:14px;right:14px;background:rgba(0,0,0,.72);font:600 12px/1 var(--mono);padding:7px 9px;letter-spacing:.04em}
+
+section{padding:104px 0;border-top:1px solid var(--line)}
+h2{font:800 clamp(40px,4.6vw,68px)/.95 var(--cond);text-transform:uppercase;max-width:16em;text-wrap:balance}
+.sub{margin-top:20px;color:var(--body);max-width:40em}
+
+/* loudness */
+.seis{margin-top:52px;position:relative}
+.seis svg{display:block;width:100%;height:240px;overflow:visible}
+.seis .hit{cursor:pointer;outline:none}
+.seis .hit:focus-visible circle,.seis .hit.on circle{r:8}
+.axis{display:flex;justify-content:space-between;font:400 12px/1 var(--mono);color:var(--dim);margin-top:12px}
+.pop{position:absolute;top:-150px;pointer-events:none;width:240px;background:var(--panel);opacity:0;transform:translateY(6px);transition:opacity .15s cubic-bezier(.16,1,.3,1),transform .15s cubic-bezier(.16,1,.3,1);z-index:2;box-shadow:0 12px 32px rgba(0,0,0,.5)}
+.pop.on{opacity:1;transform:none}
+.pop img{width:100%;display:block;aspect-ratio:16/9;object-fit:cover}
+.pop p{padding:10px 12px;font:400 12px/1.4 var(--mono);color:var(--mute)}
+.pop p b{display:block;font:800 26px/1 var(--cond);color:var(--ink);margin-bottom:4px}
+
+.reels{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:56px}
+.reel figure{position:relative;aspect-ratio:16/9;overflow:hidden;background:#000;border:1px solid var(--line)}
+.reel img{width:100%;height:100%;object-fit:cover;display:block;transform:scale(1.31);transform-origin:0 0}
+.reel figure span{position:absolute;left:0;bottom:0;background:var(--go);color:var(--go-ink);font:800 13px/1 var(--cond);padding:5px 8px;text-transform:uppercase;letter-spacing:.06em}
+.reel figure span.b{background:#2b302e;color:var(--ink)}
+.reel .m{font:800 italic 40px/1 var(--cond);color:var(--hot);margin-top:14px}
+.reel h3{font:700 19px/1.2 var(--cond);text-transform:uppercase;margin-top:6px}
+.reel p{font:400 12px/1.5 var(--mono);color:var(--mute);margin-top:4px}
+
+/* steps */
+.steps{display:grid;grid-template-columns:repeat(4,1fr);margin-top:56px;border-top:2px solid var(--go);list-style:none;counter-reset:s}
+.steps li{padding:26px 28px 0 0}
+.steps h3{font:800 32px/1 var(--cond);text-transform:uppercase;margin-bottom:12px}
+.steps p{color:var(--body);font-size:16px;max-width:19em}
+
+.shot{margin-top:56px;border:1px solid var(--line);background:#000}
+.shot img{width:100%;height:auto;display:block}
+.notes{display:grid;grid-template-columns:repeat(3,1fr);gap:40px;margin-top:36px}
+.notes h3{font:700 22px/1.1 var(--cond);text-transform:uppercase;margin-bottom:8px}
+.notes p{color:var(--body);font-size:16px}
+kbd{font:600 12px/1 var(--mono);border:1px solid #3a413e;border-bottom-width:2px;padding:3px 6px;color:var(--ink)}
+
+.phones{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;margin:52px auto 0;max-width:1000px}
+.phone{margin:0}
+.phone video{display:block;width:100%;height:auto;aspect-ratio:9/16;background:#000;border:1px solid var(--line);object-fit:cover}
+.phone figcaption{display:flex;justify-content:space-between;gap:12px;margin-top:12px;font:400 13px/1.4 var(--mono);color:var(--mute)}
+.phone figcaption b{color:var(--ink);font-weight:600}
+#vertical .fine{margin-top:28px;color:var(--body);font-size:16px}#vertical .fine b{color:var(--ink);font-weight:600}
+
+/* cost */
+.board{margin-top:52px;border:1px solid var(--line)}
+.row{display:grid;grid-template-columns:2fr 1fr 3fr;align-items:center;border-bottom:1px solid var(--line);padding:20px 24px;gap:24px}
+.row:last-child{border-bottom:0}
+.row .mdl{font:600 15px/1 var(--mono)}
+.row .p{font:800 44px/1 var(--cond)}
+.row.pick{background:rgba(83,252,24,.07)}
+.row.pick .mdl:after{content:"default";margin-left:10px;font:700 11px/1 var(--mono);background:var(--go);color:var(--go-ink);padding:3px 6px;text-transform:uppercase;vertical-align:2px}
+.row .why{color:var(--body);font-size:16px}
+
+.inst{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;margin-top:52px}
+.card{background:var(--panel);border:1px solid var(--line);padding:32px}
+.card h3{font:800 34px/1 var(--cond);text-transform:uppercase}
+.card p{color:var(--body);margin:12px 0 22px;font-size:16px}
+pre{background:#070908;border:1px solid var(--line);padding:18px 20px;font:400 14px/1.7 var(--mono);color:#cfe9c4;overflow-x:auto}
+
+.fp{display:grid;grid-template-columns:1fr 1fr;gap:0 64px;margin-top:44px;list-style:none}
+.fp li{padding:14px 0;border-top:1px solid var(--line);color:var(--body);font-size:16px}
+.fp li b{color:var(--ink);font-weight:600}
+footer{border-top:1px solid var(--line);padding:32px 0 48px;font-size:14px;color:var(--dim)}
+footer .wrap{display:flex;gap:24px;flex-wrap:wrap}
+footer a{color:var(--mute)}
+
+@media (max-width:960px){
+  .hero .wrap{grid-template-columns:minmax(0,1fr);gap:40px}
+  .reels,.steps{grid-template-columns:1fr 1fr;gap:16px}
+  .notes,.inst,.fp{grid-template-columns:minmax(0,1fr)}
+  .phones{gap:16px}
+}
+@media (max-width:620px){
+  .wrap{padding:0 16px}
+  .links a:not(.btn){display:none}
+  .hero{padding:48px 0}
+  section{padding:72px 0}
+  .reels,.steps{grid-template-columns:minmax(0,1fr)}
+  .phones{grid-template-columns:minmax(0,1fr);max-width:340px}
+  .row{grid-template-columns:1fr auto;padding:18px 16px}.row .why{grid-column:1/-1}
+  .bug{bottom:12px}.bug .n small{display:none}.bug .x{font-size:28px;padding:0 12px}.bug .n strong{font-size:17px}.bug .k{font-size:15px;padding:8px 10px}
+  .seis svg{height:160px}
+  .pop{top:-140px}
+  .card{padding:22px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<nav><div class="wrap">
+  <a class="logo" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2" fill="currentColor"/><path d="M12 1v5M12 18v5M1 12h5M18 12h5"/></svg>ClipSniper</a>
+  <div class="links"><a href="#how">How it works</a><a href="#vertical">Vertical</a><a href="#cost">Cost</a><a href="https://github.com/biceroy/clipsniper">GitHub</a><a class="btn go sm" href="#get">Download</a></div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <div>
+    <h1>Your VOD, sorted by what's <em>worth clipping.</em></h1>
+    <p class="lede">Point ClipSniper at a Kick slot stream. It finds the moments a slot went off and the streamer lost it, reads the bet and the win off the screen, and lists them next to the VOD. You pick, trim and export.</p>
+    <div class="ctas"><a class="btn go" href="#get">Download for Windows</a><a class="btn" href="https://github.com/biceroy/clipsniper">Run from source</a></div>
+    <p class="fine">Free and MIT licensed. Runs on your machine with your own Anthropic key.</p>
+  </div>
+  <div class="screen">
+    <video src="assets/hero.mp4" poster="assets/hero.jpg" width="1280" height="720" autoplay muted loop playsinline aria-label="Money Train 5 bonus ending on a congratulations screen: $16,712.80 won from a $0.40 bet"></video>
+    <div class="tc num">1:39:48 / 4:22:23</div>
+    <div class="bug" aria-hidden="true"><div class="k">Big win</div><div class="n"><small>Money Train 5 · $0.40 bet</small><strong class="num">$16,712.80</strong></div><div class="x num">41,782×</div></div>
+  </div>
+</div></header>
+
+<section id="scan"><div class="wrap">
+  <h2>262 minutes of stream, fourteen clips worth posting.</h2>
+  <p class="sub">Below is the loudness of the gamducks stream from 27 September, fifteen seconds per bar. ClipSniper sent the 60 loudest spikes to Claude for $0.37 and got fourteen clip-worthy moments back. Hover or tab to a yellow marker to see one.</p>
+  <div class="seis" id="seis">
+    <svg id="wave" viewBox="0 0 1049 240" preserveAspectRatio="none" role="group" aria-label="Loudness of a 262-minute stream with clip-worthy moments marked"></svg>
+    <div class="axis num" aria-hidden="true"><span>0:00</span><span>1:00</span><span>2:00</span><span>3:00</span><span>4:22</span></div>
+    <div class="pop" id="pop" aria-hidden="true"><img src="assets/mt.jpg" alt=""><p></p></div>
+  </div>
+  <div class="reels">
+    <article class="reel"><figure><img src="assets/mt.jpg" width="1280" height="720" alt="Money Train 5 congratulations screen showing 16,712.80 won" loading="lazy"><span>Big win</span></figure><div class="m num">41,782×</div><h3>Money Train 5</h3><p class="num">1:34:58 · $0.40 → $16,712.80</p></article>
+    <article class="reel"><figure><img src="assets/seamen.jpg" width="1280" height="720" alt="Soaked By Seamen bonus summary showing a total win of 7,632.36" loading="lazy"><span>Big win</span></figure><div class="m num">12,720×</div><h3>Soaked By Seamen</h3><p class="num">2:37:16 · $0.60 → $7,632.36</p></article>
+    <article class="reel"><figure><img src="assets/cowboys.jpg" width="1280" height="720" alt="Concrete Cowboys bonus showing a $1,273.10 win" loading="lazy"><span>Big win</span></figure><div class="m num">1,273×</div><h3>Concrete Cowboys</h3><p class="num">1:08:00 · $1.00 → $1,273.10</p></article>
+    <article class="reel"><figure><img src="assets/toad.jpg" width="1280" height="720" alt="Toad Town total win screen showing 882.10 after 13 free spins" loading="lazy"><span>Big win</span></figure><div class="m num">882×</div><h3>Toad Town</h3><p class="num">2:17:35 · $1.00 → $882.10</p></article>
+  </div>
+</div></section>
+
+<section id="how"><div class="wrap">
+  <h2>It listens, reads the screen, and lets a fixed rule decide.</h2>
+  <ol class="steps">
+    <li><h3>Listen</h3><p>One ffmpeg pass pulls the audio and a frame every 30 seconds from Kick at 20× realtime. Loudness against a five-minute median marks the spikes.</p></li>
+    <li><h3>Read</h3><p>Claude gets three frames around each spike and reads the slot, bet, win, banner and bonus stage off the game UI.</p></li>
+    <li><h3>Decide</h3><p>100× the bet or $1,000 and up counts as a big win. The same frames get the same verdict on every run, and a long bonus collapses into one entry with its final total.</p></li>
+    <li><h3>Cut</h3><p>Exports copy the 1080p60 source with no re-encode. Vertical exports stack the cam over the game for TikTok and Shorts, captions optional.</p></li>
+  </ol>
+</div></section>
+
+<section><div class="wrap">
+  <h2>The list, the VOD and the trimmer on one screen.</h2>
+  <div class="shot"><img src="assets/app-review.jpg" alt="ClipSniper review screen: moment list on the left, Kick VOD playing in the center, filmstrip and trimmer below" width="3200" height="1920" loading="lazy"></div>
+  <div class="notes">
+    <div><h3>Plays from Kick</h3><p>Nothing downloads up front. You scrub the VOD straight off Kick's CDN in your browser.</p></div>
+    <div><h3>Keyboard first</h3><p><kbd>J</kbd> <kbd>K</kbd> next moment, <kbd>I</kbd> <kbd>O</kbd> in and out, <kbd>E</kbd> export, <kbd>V</kbd> vertical.</p></div>
+    <div><h3>Misses one tab away</h3><p>Every spike the audio flagged stays under All spikes, so you can recover a quiet win.</p></div>
+  </div>
+</div></section>
+
+<section id="vertical"><div class="wrap">
+  <h2>Press V and it comes out ready for TikTok.</h2>
+  <p class="sub">Export vertical re-encodes your range to 1080×1920. Drag one box over the facecam and one over the game, once per channel, and every clip after that stacks them. These three came straight out of the app, no editor in between.</p>
+  <div class="phones">
+    <figure class="phone"><video src="assets/v-moneytrain.mp4" poster="assets/v-moneytrain.jpg" width="480" height="854" controls muted loop playsinline preload="none" aria-label="Vertical clip: Money Train 5 bonus ending on a $16,712.80 win, streamer cam on top"></video><figcaption><b>Money Train 5</b><span class="num">$0.40 → $16,712.80 · 30 s</span></figcaption></figure>
+    <figure class="phone"><video src="assets/v-seamen.mp4" poster="assets/v-seamen.jpg" width="480" height="854" controls muted loop playsinline preload="none" aria-label="Vertical clip: Soaked By Seamen bonus climbing to $7,632.36, streamer cam on top"></video><figcaption><b>Soaked By Seamen</b><span class="num">$0.60 → $7,632.36 · 20 s</span></figcaption></figure>
+    <figure class="phone"><video src="assets/v-bonanza.mp4" poster="assets/v-bonanza.jpg" width="480" height="854" controls muted loop playsinline preload="none" aria-label="Vertical clip: Sweet Bonanza 1000 paying $3,278.75 on a $1 bet, streamer cam on top"></video><figcaption><b>Sweet Bonanza 1000</b><span class="num">$1.00 → $3,278.75 · 24 s</span></figcaption></figure>
+  </div>
+  <p class="fine">Tick <b>Burn in captions</b> and the app transcribes just that clip and burns in three-word lines, for under a cent a minute with a Groq or OpenAI key.</p>
+</div></section>
+
+<section id="cost"><div class="wrap">
+  <h2>About 65 cents a stream, paid to Anthropic with your key.</h2>
+  <div class="board" role="table" aria-label="Cost per four-hour VOD by model">
+    <div class="row" role="row"><span class="mdl" role="cell">claude-haiku-4-5</span><span class="p num" role="cell">$0.30</span><span class="why" role="cell">Catches the wins, misreads slot names and amounts.</span></div>
+    <div class="row pick" role="row"><span class="mdl" role="cell">claude-sonnet-5</span><span class="p num" role="cell">$0.65</span><span class="why" role="cell">Gets the names and amounts Haiku misses.</span></div>
+    <div class="row" role="row"><span class="mdl" role="cell">claude-opus-5</span><span class="p num" role="cell">$1.60</span><span class="why" role="cell">Best descriptions, for when the labels matter more than the price.</span></div>
+  </div>
+  <p class="sub">Prices are per four-hour VOD. Transcription for funny moments and captions is optional, about $0.17 per four hours on Groq. The app shows you the estimate before it spends anything.</p>
+</div></section>
+
+<section id="get"><div class="wrap">
+  <h2>One exe, or two Python files.</h2>
+  <div class="inst">
+    <div class="card"><h3>Windows</h3><p>Download it and double-click. Your browser opens the app; add your channel and API key in Settings. ffmpeg downloads itself on first use.</p><a class="btn go" href="https://github.com/biceroy/clipsniper/releases/latest">Download clipsniper.exe</a></div>
+    <div class="card"><h3>From source</h3><p>Windows, macOS or Linux. You need Python 3.10+ and ffmpeg on your PATH.</p><pre>pipx install git+https://github.com/biceroy/clipsniper
+clipsniper</pre></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2>Limits and privacy</h2>
+  <ul class="fp">
+    <li><b>Frames leave your machine</b> for Anthropic, under your key. Audio goes to Groq or OpenAI only if you add a transcription key.</li>
+    <li><b>Quiet wins can slip by.</b> A win outside the top 60 spikes gets missed. Raise the count in Settings for a calm streamer.</li>
+    <li><b>The app binds to 127.0.0.1.</b> No telemetry, no account.</li>
+    <li><b>Kick only, last 30 VODs.</b> Kick deletes VODs after about 30 days. Twitch and local files are on the roadmap.</li>
+    <li><b>Public VODs only.</b> No login, nothing subscriber-only. Not affiliated with Kick.</li>
+    <li><b>The exe is unsigned.</b> SmartScreen may warn you. Run from source if you'd rather read the code first.</li>
+  </ul>
+</div></section>
+
+<footer><div class="wrap"><span>ClipSniper v0.3.0 · MIT</span><a href="https://github.com/biceroy/clipsniper">github.com/biceroy/clipsniper</a><span>Clip other people's streams with their permission.</span></div></footer>
+
+<script src="assets/scan.js"></script>
+<script>
+const hits=[
+ {t:4080,m:'1,273×',s:'Concrete Cowboys',d:'$1.00 → $1,273.10',f:'cowboys'},
+ {t:5698,m:'41,782×',s:'Money Train 5',d:'$0.40 → $16,712.80',f:'mt'},
+ {t:8255,m:'882×',s:'Toad Town',d:'$1.00 → $882.10',f:'toad'},
+ {t:9436,m:'12,720×',s:'Soaked By Seamen',d:'$0.60 → $7,632.36',f:'seamen'}];
+const fmt=t=>`${Math.floor(t/3600)}:${String(Math.floor(t%3600/60)).padStart(2,'0')}:${String(Math.floor(t%60)).padStart(2,'0')}`;
+(s=>{
+  const svg=document.getElementById('wave'),pop=document.getElementById('pop'),box=document.getElementById('seis'),base=170;
+  let p='';s.loud.forEach((v,i)=>{p+=`M${i+.5} ${base}V${base-Math.max(1,Math.max(0,v+10)**1.5*2)}`});
+  let out=`<path d="${p}" stroke="#3a423f" stroke-width=".8"/><line x1="0" x2="1049" y1="${base}" y2="${base}" stroke="#232826"/>`;
+  for(const m of s.moments){if(!['big_win','funny','bonus'].includes(m.kind))continue;const x=m.t/s.step;
+    out+=`<line x1="${x}" x2="${x}" y1="${base}" y2="${base+(m.kind==='bonus'?20:40)}" stroke="${m.kind==='bonus'?'#4a524e':'#53fc18'}" stroke-width="2"/>`}
+  hits.forEach((h,i)=>{const x=h.t/s.step;out+=`<g class="hit" data-i="${i}" tabindex="0" role="button" aria-label="${h.s}, ${h.m} at ${fmt(h.t)}"><rect x="${x-10}" y="0" width="20" height="240" fill="transparent"/><line x1="${x}" x2="${x}" y1="10" y2="${base+46}" stroke="#ffcc33" stroke-width="1.5" stroke-dasharray="3 3"/><circle cx="${x}" cy="${base+50}" r="5" fill="#ffcc33"/></g>`});
+  svg.innerHTML=out;
+  const show=g=>{const h=hits[g.dataset.i],w=box.clientWidth,x=h.t/s.step/1049*w;
+    svg.querySelectorAll('.hit').forEach(o=>o.classList.toggle('on',o===g));
+    pop.querySelector('img').src=`assets/${h.f}.jpg`;pop.querySelector('p').innerHTML=`<b>${h.m}</b>${h.s}<br>${fmt(h.t)} · ${h.d}`;
+    pop.style.left=Math.min(Math.max(0,x-120),w-240)+'px';pop.classList.add('on')};
+  const hide=()=>{pop.classList.remove('on');svg.querySelectorAll('.hit.on').forEach(o=>o.classList.remove('on'))};
+  svg.querySelectorAll('.hit').forEach(g=>{['mouseenter','focus','click'].forEach(e=>g.addEventListener(e,()=>show(g)));g.addEventListener('mouseleave',hide);g.addEventListener('blur',hide)});
+})(window.SCAN);
+</script>
+</body>
+</html>

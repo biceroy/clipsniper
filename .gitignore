@@ -1,0 +1,24 @@
+out/
+.env
+config.json
+build/
+dist/
+*.spec
+__pycache__/
+*.egg-info/
+.venv/
+
+# site: design drafts and Vercel link stay local
+site/a-broadcast.html
+site/b-logbook.html
+site/c-reel.html
+site/directions.html
+site/assets/scan.json
+site/assets/f00190.jpg
+site/assets/f00191.jpg
+site/assets/f00192.jpg
+site/assets/f00311.jpg
+site/.vercel/
+.impeccable/
+.vercel/
+.env*
